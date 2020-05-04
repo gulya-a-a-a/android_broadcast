@@ -14,6 +14,7 @@ public class SettingsSingleton implements Serializable {
         mShowPressure = mShowWindSpeed = true;
     }
 
+
     public static SettingsSingleton getInstance() {
         if (sInstance == null) {
             sInstance = new SettingsSingleton();
