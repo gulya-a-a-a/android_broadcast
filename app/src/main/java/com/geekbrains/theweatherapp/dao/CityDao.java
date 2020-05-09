@@ -29,10 +29,18 @@ public interface CityDao {
     @Query("SELECT * FROM cities WHERE id = :id")
     CityEntity getCityById(long id);
 
+    @Query("SELECT * FROM cities WHERE name = :name")
+    List<CityEntity> getCityByName(String name);
+
     @Query("SELECT * FROM cities")
     List<CityEntity> getAllCities();
 
     @Query("SELECT COUNT() FROM cities")
     long getCountCities();
 
+    @Query("SELECT * FROM cities ORDER BY name ASC")
+    List<CityEntity> getAscSortedCities();
+
+    @Query("SELECT * FROM cities ORDER BY name DESC")
+    List<CityEntity> getDescSortedCities();
 }
