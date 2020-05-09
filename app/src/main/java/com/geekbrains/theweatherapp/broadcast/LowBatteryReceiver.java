@@ -27,7 +27,8 @@ public class LowBatteryReceiver extends BroadcastReceiver {
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle("The Weather App")
                     .setContentText("Battery is running low");
-
+					
+			notificationManager.notify(messageID, builder.build());
         } else {
             notificationManager.cancel(messageID);
         }
