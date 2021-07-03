@@ -1,9 +1,17 @@
 package com.geekbrains.theweatherapp.activities;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.Menu;
+import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,12 +24,13 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.geekbrains.theweatherapp.R;
-import com.geekbrains.theweatherapp.model.CitiesRepo;
-import com.geekbrains.theweatherapp.model.CityEntity;
+import com.geekbrains.theweatherapp.broadcast.CellularMissedReceiver;
+import com.geekbrains.theweatherapp.broadcast.LowBatteryReceiver;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
-
-import java.util.Currency;
-import java.util.List;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -29,7 +38,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout mDrawerLayout;
     private NavController mNavController;
 
-    private CitiesRepo mCitiesRepo;
+    private BroadcastReceiver mLowBatteryReceiver = new LowBatteryReceiver(),
+            mMissedCellularReceiver = new CellularMissedReceiver();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,16 +49,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         initViews();
         initDrawer();
-//        mCitiesRepo = new CitiesRepo(App.getInstance().getCityDao());
-//        List<CityEntity> cities = mCitiesRepo.getCities();
+        initBroadcastReceivers();
+        initNotificationChannel();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        MenuItem searchItem = menu.findItem(R.id.search_item);
-        searchItem.setVisible(false);
-        return true;
+    private void initNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager
+                    = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel = new NotificationChannel("1",
+                    "WeatherAppNotifications",
+                    NotificationManager.IMPORTANCE_LOW);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void initBroadcastReceivers() {
+        registerReceiver(mLowBatteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        registerReceiver(mLowBatteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+        registerReceiver(mMissedCellularReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
     }
 
     private void initViews() {
@@ -68,8 +90,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         NavigationUI.setupWithNavController(navigationView, mNavController);
 
         navigationView.setNavigationItemSelectedListener(this);
-
-
     }
 
     @Override
@@ -115,9 +135,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         drawerLayout.closeDrawer(GravityCompat.START);
         return res;
-    }
-
-    public CitiesRepo getCitiesRepo() {
-        return mCitiesRepo;
     }
 }
